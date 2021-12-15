@@ -2,6 +2,35 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { PlaylistTracks } from 'react-spotify-api'
 import { Playlist } from 'react-spotify-api'
+import { Page, Text, View, Document, PDFDownloadLink, StyleSheet } from '@react-pdf/renderer';
+
+// Create styles
+const pdfStyles = StyleSheet.create({
+  page: {
+    flexDirection: 'row',
+    backgroundColor: '#E4E4E4'
+  },
+  section: {
+    margin: 10,
+    padding: 10,
+    flexGrow: 1
+  }
+});
+
+const PDFDocument = ({lyrics}) => (
+  <Document>
+    <Page size="A4" style={pdfStyles.page} wrap>
+      <View style={pdfStyles.section}>
+        {
+          lyrics.map((lyric) => <Text break>{lyric}</Text>)
+        }
+      </View>
+      <Text render={({ pageNumber, totalPages }) => (
+        `${pageNumber} / ${totalPages}`
+      )} fixed />
+    </Page>
+  </Document>
+);
 
 const fetcher = async (url, options = {}) => {
   const res = await fetch(url, options)
@@ -21,6 +50,7 @@ const PlaylistPage = () => {
   const router = useRouter()
   const { id } = router.query
   const [loadedTracks, setLoadedTracks] = useState({});
+  const [lyrics, setLyrics] = useState([]);
   const [state, setState] = useState({
     tracksChecked: {},
   })
@@ -61,8 +91,9 @@ const PlaylistPage = () => {
         method: "POST",
         body: JSON.stringify({tracks}),
         headers: {"Content-type": "application/json; charset=UTF-8"}
-      }).then((data) => {
-        console.log('Fetched: =========> ', data);
+      }).then(({ lyrics }) => {
+        console.log('Fetched: =========> ', lyrics);
+        setLyrics(lyrics)
       })
     }
   }
@@ -102,6 +133,12 @@ const PlaylistPage = () => {
           }
         }
       </PlaylistTracks>
+    { lyrics && !!lyrics.length && (
+      <PDFDownloadLink document={<PDFDocument lyrics={lyrics} />} filename="lyrics.pdf">
+      {({ blob, url, loading, error }) =>
+        loading ? 'Loading document...' : 'Download'
+      }
+      </PDFDownloadLink>) }
     </>
   )
 }
