@@ -6,28 +6,54 @@ import { Page, Text, View, Document, PDFDownloadLink, StyleSheet } from '@react-
 
 // Create styles
 const pdfStyles = StyleSheet.create({
-  page: {
-    flexDirection: 'row',
-    backgroundColor: '#E4E4E4'
+  body: {
+    paddingTop: 35,
+    paddingBottom: 65,
+    paddingHorizontal: 35,
+    backgroundColor: 'white'
+  },
+  header: {
+    fontSize: 14,
+    marginBottom: 20,
+    textAlign: 'center',
+    color: 'grey',
   },
   section: {
     margin: 10,
     padding: 10,
     flexGrow: 1
+  },
+  pageNumber: {
+    position: 'absolute',
+    fontSize: 12,
+    bottom: 30,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    color: 'grey',
   }
 });
 
-const PDFDocument = ({lyrics}) => (
+const PDFDocument = ({data}) => (
   <Document>
-    <Page size="A4" style={pdfStyles.page} wrap>
-      <View style={pdfStyles.section}>
+    <Page size="A4" style={pdfStyles.body} wrap>
         {
-          lyrics.map((lyric) => <Text break>{lyric}</Text>)
+          data.map((song) => (
+            <View break>
+              <View style={pdfStyles.header}>
+                <Text>{song.name} by {song.artist}</Text>
+              </View>
+              <View style={pdfStyles.section}>
+                <Text>{song.lyrics}</Text>
+              </View>
+            </View>
+          ))
         }
-      </View>
+      <View style={pdfStyles.pageNumber}>
       <Text render={({ pageNumber, totalPages }) => (
         `${pageNumber} / ${totalPages}`
       )} fixed />
+      </View>
     </Page>
   </Document>
 );
@@ -50,7 +76,7 @@ const PlaylistPage = () => {
   const router = useRouter()
   const { id } = router.query
   const [loadedTracks, setLoadedTracks] = useState({});
-  const [lyrics, setLyrics] = useState([]);
+  const [data, setData] = useState([]);
   const [state, setState] = useState({
     tracksChecked: {},
   })
@@ -91,9 +117,9 @@ const PlaylistPage = () => {
         method: "POST",
         body: JSON.stringify({tracks}),
         headers: {"Content-type": "application/json; charset=UTF-8"}
-      }).then(({ lyrics }) => {
-        console.log('Fetched: =========> ', lyrics);
-        setLyrics(lyrics)
+      }).then(({ data }) => {
+        console.log('Fetched: =========> ', data);
+        setData(data)
       })
     }
   }
@@ -133,8 +159,8 @@ const PlaylistPage = () => {
           }
         }
       </PlaylistTracks>
-    { lyrics && !!lyrics.length && (
-      <PDFDownloadLink document={<PDFDocument lyrics={lyrics} />} filename="lyrics.pdf">
+    { data && !!data.length && (
+      <PDFDownloadLink document={<PDFDocument data={data} />} filename="lyrics.pdf">
       {({ blob, url, loading, error }) =>
         loading ? 'Loading document...' : 'Download'
       }

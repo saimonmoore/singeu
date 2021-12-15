@@ -8,7 +8,11 @@ export default function handler(req, res) {
 
     return Promise.all(tracks.map(({name, artist}) => lyricsSearcher(name, artist))).then((lyrics) => {
       console.log('[Generated lyrics] =======================> ', { lyrics })
-      res.status(200).json({ lyrics})
+      const data = tracks.reduce((m, {name, artist}, index) => {
+        m.push({ name, artist, lyrics: lyrics[index]})
+        return m;
+      }, []);
+      res.status(200).json({ data })
     }).catch((error) => {
       console.log(error)
       res.status(500).json({ error })
