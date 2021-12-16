@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
+import Link from 'next/link'
 import { PlaylistTracks } from 'react-spotify-api'
 import { Playlist } from 'react-spotify-api'
 import { Page, Text, View, Document, PDFDownloadLink, StyleSheet } from '@react-pdf/renderer';
@@ -26,9 +27,8 @@ const pdfStyles = StyleSheet.create({
   pageNumber: {
     position: 'absolute',
     fontSize: 12,
-    bottom: 30,
-    left: 0,
-    right: 0,
+    top: 35,
+    right: 50,
     textAlign: 'center',
     color: 'grey',
   }
@@ -49,11 +49,9 @@ const PDFDocument = ({data}) => (
             </View>
           ))
         }
-      <View style={pdfStyles.pageNumber}>
-      <Text render={({ pageNumber, totalPages }) => (
+      <Text style={pdfStyles.pageNumber} render={({ pageNumber, totalPages }) => (
         `${pageNumber} / ${totalPages}`
       )} fixed />
-      </View>
     </Page>
   </Document>
 );
@@ -63,13 +61,14 @@ const fetcher = async (url, options = {}) => {
   const data = await res.json()
 
   if (res.status !== 200) {
+    console.log('Booom =============> ', { status: res.status, message: data.message})
     throw new Error(data.message)
   }
   return data
 }
 
 const Track = ({track, checked, handleChange}) => (
-  <li key={track.track.id}><input type="checkbox" onChange={handleChange} key={track.track.id} name={track.track.id} id={track.track.id} checked={checked}/>{track.track.name}</li>
+  <li key={track.track.id}><input type="checkbox" onChange={handleChange} key={track.track.id} name={track.track.id} id={track.track.id} checked={checked}/><label for={track.track.id}>{track.track.name} by {track.track.artists[0].name}</label></li>
 )
 
 const PlaylistPage = () => {
@@ -107,10 +106,14 @@ const PlaylistPage = () => {
   const generateLyrics = () => {
     console.log('[Generating lyrics] =======================> Checking...')
 
-    if (loadedTracks && Object.values(loadedTracks).length) {
-      const tracks = Object.values(loadedTracks).map(({track}) => {
-        return { name: track.name, artist: track.artists[0].name }
+    const { tracksChecked } = state;
+
+    if (tracksChecked && Object.keys(tracksChecked).length) {
+      const tracks = Object.keys(tracksChecked).map(id => {
+        const track = loadedTracks[id];
+        return { name: track.track.name, artist: track.track.artists[0].name }
       });
+
       console.log('[Generating lyrics] =======================> ', { tracks })
 
       fetcher('/api/lyrics', {
@@ -129,11 +132,18 @@ const PlaylistPage = () => {
 
   return (
     <>
+      <Link href={`/`}><a>Back</a></Link>
       <Playlist id={id}>
         {(playlist, loading, error) => (
             playlist ?  <p>Playlist: {playlist?.data?.name}</p> : null
         )}
       </Playlist>
+    { data && !!data.length && (
+      <PDFDownloadLink document={<PDFDocument data={data} />} filename="lyrics.pdf">
+      {({ blob, url, loading, error }) =>
+        loading ? 'Loading document...' : 'Download'
+      }
+      </PDFDownloadLink>) }
     <div>
       Check all: <input type="checkbox" onClick={toggleAll} />
     </div>
@@ -159,12 +169,6 @@ const PlaylistPage = () => {
           }
         }
       </PlaylistTracks>
-    { data && !!data.length && (
-      <PDFDownloadLink document={<PDFDocument data={data} />} filename="lyrics.pdf">
-      {({ blob, url, loading, error }) =>
-        loading ? 'Loading document...' : 'Download'
-      }
-      </PDFDownloadLink>) }
     </>
   )
 }
