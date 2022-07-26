@@ -34,21 +34,21 @@ const pdfStyles = StyleSheet.create({
   }
 });
 
-const PDFDocument = ({data}) => (
+const PDFDocument = ({ data }) => (
   <Document>
     <Page size="A4" style={pdfStyles.body} wrap>
-        {
-          data.map((song) => (
-            <View break>
-              <View style={pdfStyles.header}>
-                <Text>{song.name} by {song.artist}</Text>
-              </View>
-              <View style={pdfStyles.section}>
-                <Text>{song.lyrics}</Text>
-              </View>
+      {
+        data.map((song) => (
+          <View break>
+            <View style={pdfStyles.header}>
+              <Text>{song.name} by {song.artist}</Text>
             </View>
-          ))
-        }
+            <View style={pdfStyles.section}>
+              <Text>{song.lyrics}</Text>
+            </View>
+          </View>
+        ))
+      }
       <Text style={pdfStyles.pageNumber} render={({ pageNumber, totalPages }) => (
         `${pageNumber} / ${totalPages}`
       )} fixed />
@@ -61,14 +61,14 @@ const fetcher = async (url, options = {}) => {
   const data = await res.json()
 
   if (res.status !== 200) {
-    console.log('Booom =============> ', { status: res.status, message: data.message})
+    console.log('Booom =============> ', { status: res.status, message: data.message })
     throw new Error(data.message)
   }
   return data
 }
 
-const Track = ({track, checked, handleChange}) => (
-  <li key={track.track.id}><input type="checkbox" onChange={handleChange} key={track.track.id} name={track.track.id} id={track.track.id} checked={checked}/><label for={track.track.id}>{track.track.name} by {track.track.artists[0].name}</label></li>
+const Track = ({ track, checked, handleChange }) => (
+  <li key={track.track.id}><input type="checkbox" onChange={handleChange} key={track.track.id} name={track.track.id} id={track.track.id} checked={checked} /><label for={track.track.id}>{track.track.name} by {track.track.artists[0].name}</label></li>
 )
 
 const PlaylistPage = () => {
@@ -85,7 +85,7 @@ const PlaylistPage = () => {
   }, [state])
 
   const handleChange = (e) => {
-   const { name, checked } = e.target;
+    const { name, checked } = e.target;
     console.log('Click: =======> ', { name, checked });
     setState((prevState) => ({
       ...prevState,
@@ -97,10 +97,12 @@ const PlaylistPage = () => {
   }
 
   const toggleAll = () => {
-    setState({ tracksChecked: Object.keys(loadedTracks).reduce((m, id) => {
-      m[id] = true;
-      return m;
-    }, {})})
+    setState({
+      tracksChecked: Object.keys(loadedTracks).reduce((m, id) => {
+        m[id] = true;
+        return m;
+      }, {})
+    })
   }
 
   const generateLyrics = () => {
@@ -118,55 +120,57 @@ const PlaylistPage = () => {
 
       fetcher('/api/lyrics', {
         method: "POST",
-        body: JSON.stringify({tracks}),
-        headers: {"Content-type": "application/json; charset=UTF-8"}
+        body: JSON.stringify({ tracks }),
+        headers: { "Content-type": "application/json; charset=UTF-8" }
       }).then(({ data }) => {
         console.log('Fetched: =========> ', data);
         setData(data)
+      }).catch((error) => {
+        console.log('Fetch error: =========> ', error);
       })
     }
   }
 
-  console.log({loadedTracks});
-  console.log({state});
+  console.log({ loadedTracks });
+  console.log({ state });
 
   return (
     <>
       <Link href={`/`}><a>Back</a></Link>
       <Playlist id={id}>
         {(playlist, loading, error) => (
-            playlist ?  <p>Playlist: {playlist?.data?.name}</p> : null
+          playlist ? <p>Playlist: {playlist?.data?.name}</p> : (<p>{loading ? loading : error}</p>)
         )}
       </Playlist>
-    { data && !!data.length && (
-      <PDFDownloadLink document={<PDFDocument data={data} />} filename="lyrics.pdf">
-      {({ blob, url, loading, error }) =>
-        loading ? 'Loading document...' : 'Download'
-      }
-      </PDFDownloadLink>) }
-    <div>
-      Check all: <input type="checkbox" onClick={toggleAll} />
-    </div>
-    <div>
-      Generate Lyrics: <input type="button" onClick={generateLyrics} value="Generate Lyrics" />
-    </div>
+      {data && !!data.length && (
+        <PDFDownloadLink document={<PDFDocument data={data} />} filename="lyrics.pdf">
+          {({ blob, url, loading, error }) =>
+            loading ? 'Loading document...' : 'Download'
+          }
+        </PDFDownloadLink>)}
+      <div>
+        Check all: <input type="checkbox" onClick={toggleAll} />
+      </div>
+      <div>
+        Generate Lyrics: <input type="button" onClick={generateLyrics} value="Generate Lyrics" />
+      </div>
 
       <PlaylistTracks id={id}>
         {(tracks, loading, error) => {
-            console.log({tracks, loading, error})
-            if (loading) return (<p>Loading...</p>);
-            if (error) return (<p>Error: {error}</p>);
-            if (!tracks) return (<p>No tracks</p>);
-            
-            if (!loadedTracks || (loadedTracks && !Object.keys(loadedTracks).length)) {
-              setLoadedTracks(tracks?.data?.items.reduce((memo, item) => {
-                memo[item.track.id] = item;
-                return memo;
-              }, {}));
-            }
+          console.log({ tracks, loading, error })
+          if (loading) return (<p>Loading...</p>);
+          if (error) return (<p>Error: {error}</p>);
+          if (!tracks) return (<p>No tracks</p>);
 
-            return tracks?.data?.items?.map((track, index) => <Track track={track} checked={!!state.tracksChecked[track.track.id]} handleChange={handleChange} />) || <p>No tracks</p>
+          if (!loadedTracks || (loadedTracks && !Object.keys(loadedTracks).length)) {
+            setLoadedTracks(tracks?.data?.items.reduce((memo, item) => {
+              memo[item.track.id] = item;
+              return memo;
+            }, {}));
           }
+
+          return tracks?.data?.items?.map((track, index) => <Track track={track} checked={!!state.tracksChecked[track.track.id]} handleChange={handleChange} />) || <p>No tracks</p>
+        }
         }
       </PlaylistTracks>
     </>

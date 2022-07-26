@@ -8,8 +8,8 @@ import { Playlist } from 'react-spotify-api'
 import { User } from 'react-spotify-api'
 
 
-export default function Home({ authToken}) {
-  console.log({authToken})
+export default function Home({ authToken }) {
+  console.log({ authToken })
 
   if (!authToken) return null;
 
@@ -25,41 +25,41 @@ export default function Home({ authToken}) {
         <h2 className={styles.title}>
           Welcome
           <User>
-              {(user, loading, error) => {
-                  console.log(user)
+            {(user, loading, error) => {
+              console.log(user, loading, error)
 
-                  return user ? (
-                      <ul>
-                          <li>{user?.data?.display_name}</li>
-                      </ul>
-                  ) : null
-                }
-              }
+              return user ? (
+                <ul>
+                  <li>{user?.data?.display_name}</li>
+                </ul>
+              ) : null
+            }
+            }
           </User>
         </h2>
 
         <h2>Your playlists</h2>
-           <ul>
-             <UserPlaylists>
-                {
-                  (playlists, loading, error) => {
-                    console.log({playlists, loading, error});
-                    if (loading) return (<h3>Loading...</h3>);
-                    if (error) return (<h3>{error}</h3>);
+        <ul>
+          <UserPlaylists>
+            {
+              (playlists, loading, error) => {
+                console.log({ playlists, loading, error });
+                if (loading) return (<h3>Loading...</h3>);
+                if (error) return (<h3>{error}</h3>);
 
-                    if (!playlists) return null;
-                    
-                    return (
-                      playlists?.data?.items?.map(playlist => (
-                        <li key={playlist.id} >
-                        <Link href={`/playlists/${playlist.id}`}><a>{playlist.name}</a></Link>
-                        </li>
-                      )) || null
-                    )
-                  }
-                }
-            </UserPlaylists>
-           </ul>
+                if (!playlists) return null;
+
+                return (
+                  playlists?.data?.items?.map(playlist => (
+                    <li key={playlist.id} >
+                      <Link href={`/playlists/${playlist.id}`}><a>{playlist.name}</a></Link>
+                    </li>
+                  )) || null
+                )
+              }
+            }
+          </UserPlaylists>
+        </ul>
       </main>
 
       <footer className={styles.footer}>
